@@ -8,15 +8,24 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/BurntSushi/toml"
 	"github.com/mmcdole/gofeed"
 	"github.com/urfave/cli/v2"
 )
 
 const (
-	DEFAULT_AMOUNT_VIDS   = 3
+	DEFAULT_AMOUNT_VIDS   = 2
 	DEFAULT_URLS_PATH     = "urls.txt"
 	DEFAULT_DOWNLOAD_PATH = "~/Videos"
+	CONFIG_DIR            = "~/.config/intentional_youtube"
+	CONFIG_FILE           = "config.toml"
 )
+
+type Config struct {
+	AmountVids   int    `toml:"amount_vids"`
+	UrlsPath     string `toml:"urls_path"`
+	DownloadPath string `toml:"download_path"`
+}
 
 // Expand ~ to the home directory if used
 func expandPath(path string) (string, error) {
@@ -38,7 +47,7 @@ func ensureDir(path string) error {
 	}
 
 	if _, err := os.Stat(expandedPath); os.IsNotExist(err) {
-		return err
+		return os.MkdirAll(expandedPath, 0755)
 	}
 	return nil
 }
@@ -100,23 +109,71 @@ func downloadFeed(feed *gofeed.Feed, numVideos int, downloadPath string) {
 	}
 }
 
+func loadConfig(configPath string) (Config, error) {
+	var config Config
+	_, err := toml.DecodeFile(configPath, &config)
+	if err != nil {
+		return config, err
+	}
+	return config, nil
+}
+
+func createDefaultConfig(configPath string) error {
+	defaultConfig := Config{
+		AmountVids:   DEFAULT_AMOUNT_VIDS,
+		UrlsPath:     filepath.Join(CONFIG_DIR, DEFAULT_URLS_PATH),
+		DownloadPath: DEFAULT_DOWNLOAD_PATH,
+	}
+
+	file, err := os.Create(configPath)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	return toml.NewEncoder(file).Encode(defaultConfig)
+}
+
 func mainAction(c *cli.Context) error {
+	configDir, err := expandPath(CONFIG_DIR)
+	if err != nil {
+		return fmt.Errorf("failed to expand config directory: %w", err)
+	}
+
+	err = ensureDir(configDir)
+	if err != nil {
+		return fmt.Errorf("failed to ensure config directory: %w", err)
+	}
+
+	configPath := filepath.Join(configDir, CONFIG_FILE)
+	if _, err := os.Stat(configPath); os.IsNotExist(err) {
+		err := createDefaultConfig(configPath)
+		if err != nil {
+			return fmt.Errorf("failed to create default config file: %w", err)
+		}
+	}
+
+	config, err := loadConfig(configPath)
+	if err != nil {
+		return fmt.Errorf("failed to load config file: %w", err)
+	}
+
 	urlsPath := c.String("urls")
 	if urlsPath == "" {
-		urlsPath = DEFAULT_URLS_PATH
+		urlsPath = config.UrlsPath
 	}
 
 	numVideos := c.Int("num-videos")
 	if numVideos == 0 {
-		numVideos = DEFAULT_AMOUNT_VIDS
+		numVideos = config.AmountVids
 	}
 
 	downloadPath := c.String("download-path")
 	if downloadPath == "" {
-		downloadPath = DEFAULT_DOWNLOAD_PATH
+		downloadPath = config.DownloadPath
 	}
 
-	err := ensureDir(downloadPath)
+	err = ensureDir(downloadPath)
 	if err != nil {
 		return fmt.Errorf("failed to ensure download directory: %w", err)
 	}
