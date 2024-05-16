@@ -3,6 +3,7 @@ module intentional_youtube
 go 1.22.3
 
 require (
+	github.com/BurntSushi/toml v1.3.2 // indirect
 	github.com/PuerkitoBio/goquery v1.8.0 // indirect
 	github.com/andybalholm/cascadia v1.3.1 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.4 // indirect
