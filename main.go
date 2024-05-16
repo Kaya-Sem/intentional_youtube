@@ -77,7 +77,12 @@ func downloadVideo(url string, downloadPath string) {
 }
 
 func parseURLFile(path string) ([]string, error) {
-	file, err := os.Open(path)
+	expandedPath, err := expandPath(path)
+	if err != nil {
+		return nil, err
+	}
+
+	file, err := os.Open(expandedPath)
 	if err != nil {
 		return nil, err
 	}
@@ -111,7 +116,11 @@ func downloadFeed(feed *gofeed.Feed, numVideos int, downloadPath string) {
 
 func loadConfig(configPath string) (Config, error) {
 	var config Config
-	_, err := toml.DecodeFile(configPath, &config)
+	expandedPath, err := expandPath(configPath)
+	if err != nil {
+		return config, err
+	}
+	_, err = toml.DecodeFile(expandedPath, &config)
 	if err != nil {
 		return config, err
 	}
@@ -125,7 +134,12 @@ func createDefaultConfig(configPath string) error {
 		DownloadPath: DEFAULT_DOWNLOAD_PATH,
 	}
 
-	file, err := os.Create(configPath)
+	expandedPath, err := expandPath(configPath)
+	if err != nil {
+		return err
+	}
+
+	file, err := os.Create(expandedPath)
 	if err != nil {
 		return err
 	}
