@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 
 	"github.com/mmcdole/gofeed"
@@ -12,18 +13,55 @@ import (
 )
 
 const (
-	DEFAULT_AMOUNT_VIDS = 6
-	DEFAULT_URLS_PATH   = "urls.txt"
+	DEFAULT_AMOUNT_VIDS   = 3
+	DEFAULT_URLS_PATH     = "urls.txt"
+	DEFAULT_DOWNLOAD_PATH = "~/Videos"
 )
 
-func downloadVideo(url string) {
-	cmd := exec.Command("yt-dlp", url)
+// Expand ~ to the home directory if used
+func expandPath(path string) (string, error) {
+	if strings.HasPrefix(path, "~") {
+		home, err := os.UserHomeDir()
+		if err != nil {
+			return "", err
+		}
+		return filepath.Join(home, path[1:]), nil
+	}
+	return path, nil
+}
 
-	// Connect the command's sdout and stderr
+// Ensure the directory exists, create it if it doesn't
+func ensureDir(path string) error {
+	expandedPath, err := expandPath(path)
+	if err != nil {
+		return err
+	}
+
+	if _, err := os.Stat(expandedPath); os.IsNotExist(err) {
+		return err
+	}
+	return nil
+}
+
+func downloadVideo(url string, downloadPath string) {
+	expandedPath, err := expandPath(downloadPath)
+	if err != nil {
+		fmt.Printf("Error expanding path %s: %v\n", downloadPath, err)
+		return
+	}
+
+	// Change the current working directory to the download path
+	err = os.Chdir(expandedPath)
+	if err != nil {
+		fmt.Printf("Error changing directory to %s: %v\n", expandedPath, err)
+		return
+	}
+
+	cmd := exec.Command("yt-dlp", url)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 
-	err := cmd.Run()
+	err = cmd.Run()
 	if err != nil {
 		fmt.Printf("Error downloading video %s: %v\n", url, err)
 	}
@@ -48,12 +86,12 @@ func parseURLFile(path string) ([]string, error) {
 	return lines, scanner.Err()
 }
 
-func downloadFeed(feed *gofeed.Feed, numVideos int) {
+func downloadFeed(feed *gofeed.Feed, numVideos int, downloadPath string) {
 	numDownloaded := 0
 	for _, entry := range feed.Items {
 		url := entry.Link
 		if strings.Contains(url, "youtube.com") || strings.Contains(url, "youtu.be") {
-			downloadVideo(url)
+			downloadVideo(url, downloadPath)
 			numDownloaded++
 			if numDownloaded >= numVideos {
 				return
@@ -73,6 +111,16 @@ func mainAction(c *cli.Context) error {
 		numVideos = DEFAULT_AMOUNT_VIDS
 	}
 
+	downloadPath := c.String("download-path")
+	if downloadPath == "" {
+		downloadPath = DEFAULT_DOWNLOAD_PATH
+	}
+
+	err := ensureDir(downloadPath)
+	if err != nil {
+		return fmt.Errorf("failed to ensure download directory: %w", err)
+	}
+
 	urls, err := parseURLFile(urlsPath)
 	if err != nil {
 		return fmt.Errorf("failed to parse URL file: %w", err)
@@ -86,7 +134,7 @@ func mainAction(c *cli.Context) error {
 			fmt.Printf("Error parsing feed %s: %v\n", item, err)
 			continue
 		}
-		downloadFeed(feed, numVideos)
+		downloadFeed(feed, numVideos, downloadPath)
 	}
 
 	return nil
@@ -94,7 +142,7 @@ func mainAction(c *cli.Context) error {
 
 func main() {
 	app := &cli.App{
-		Name:  "yt-downloader",
+		Name:  "Intentional Youtube",
 		Usage: "Download videos from YouTube RSS feeds.",
 		Flags: []cli.Flag{
 			&cli.StringFlag{
@@ -104,6 +152,10 @@ func main() {
 			&cli.IntFlag{
 				Name:  "num-videos",
 				Usage: "Number of latest videos to download.",
+			},
+			&cli.StringFlag{
+				Name:  "download-path",
+				Usage: "Path to the download directory.",
 			},
 		},
 		Action: mainAction,
