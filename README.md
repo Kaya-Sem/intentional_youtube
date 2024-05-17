@@ -18,13 +18,13 @@ This Golang program allows you to download videos from YouTube channels using th
 
 ## Usage
 
-1. Create a text file containing a list of URLs, each representing a YouTube channel feed. Each URL should be on a separate line and should include the channel ID appended to the base URL. The file may contain blank lines and comments, formatted with `//`
+1. Create a text file containing a list of URLs, each representing a YouTube channel feed. Each URL should be on a separate line and should include the channel ID appended to the base URL. The file may contain blank lines and comments, formatted with `#`
 
 ```markdown
-// comment
+# comment
 https://www.youtube.com/feeds/videos.xml?channel_id=UCaiVt4r6YLPzJVgr7pOmD6w
 
-// another comment
+# another comment
 https://www.youtube.com/feeds/videos.xml?channel_id=UCXuqSBlHAE6Xw-yeJA0Tunw
 ```
 
