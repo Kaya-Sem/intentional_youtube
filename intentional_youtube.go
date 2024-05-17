@@ -145,13 +145,16 @@ func createDefaultConfig(configPath string) error {
 	}
 	defer file.Close()
 
+	println("No config found, created one at " + CONFIG_DIR)
+	println("Please add URLs in " + CONFIG_DIR + "/" + DEFAULT_URLS_PATH)
+
 	return toml.NewEncoder(file).Encode(defaultConfig)
 }
 
 func createDefaultURLsFile(filePath string) error {
 	// Default content for the URLs file
 	defaultContent := `# Default URLs file
-# Add your URLs here, one per line
+# Add your URLs here, one per line. Comments with # and blanklines are allowed.
 # Example:
 # https://www.youtube.com/feeds/videos.xml?channel_id=UC-lHJZR3Gqxm24_Vd_AJ5Yw`
 
