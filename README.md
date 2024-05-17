@@ -40,6 +40,3 @@ The default values in `config.toml` can be overriden with flags, which you can f
 
 `intentional_youtube --help`
 
-```
-
-```
