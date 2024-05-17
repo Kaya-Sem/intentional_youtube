@@ -20,7 +20,9 @@ This Golang program allows you to download videos from YouTube channels using th
 
 1. The binary release or self-build file, should be made executable before use. You can do this in the directory it was downloaded. To use it globally, you also have to put it in your path
 
-`sudo chmod +x intentional_youtube; cp intentional_youtube /usr/local/bin`
+`sudo chmod +x intentional_youtube`
+
+`cp intentional_youtube /usr/local/bin`
 
 2. When first running the program, a config file and template URLs file will be generated at `~/.config/intentional_youtube/`. From then on, running the program will parse any URLS in the file, and download them.
 
