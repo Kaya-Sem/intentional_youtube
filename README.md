@@ -18,20 +18,28 @@ This Golang program allows you to download videos from YouTube channels using th
 
 ## Usage
 
-1. Create a text file containing a list of URLs, each representing a YouTube channel feed. Each URL should be on a separate line and should include the channel ID appended to the base URL. The file may contain blank lines and comments, formatted with `#`
+1. The binary release or self-build file, should be made executable before use. You can do this in the directory it was downloaded. To use it globally, you also have to put it in your path
+
+`sudo chmod +x intentional_youtube; cp intentional_youtube /usr/local/bin`
+
+1. When first running the program, a config file and template URLs file will be generated at `~/.config/intentional_youtube/`. From then on, running the program will parse any URLS in the file, and download them.
+
+The URLs file may contain blank lines and comments, formatted with `#`.
 
 ```markdown
 # comment
+
 https://www.youtube.com/feeds/videos.xml?channel_id=UCaiVt4r6YLPzJVgr7pOmD6w
 
 # another comment
+
 https://www.youtube.com/feeds/videos.xml?channel_id=UCXuqSBlHAE6Xw-yeJA0Tunw
 ```
 
-2. Run the script and provide the path to the text file as a command-line argument:
+The default values in `config.toml` can be overriden with flags, which you can find more about with the help flag:
+
+`intentional_youtube --help`
 
 ```
-TODO
-```
 
-This will fetch the latest videos from each channel in the URL file and download them using `yt-dlp`
+```
