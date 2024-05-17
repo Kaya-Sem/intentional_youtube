@@ -92,7 +92,7 @@ func parseURLFile(path string) ([]string, error) {
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		line := strings.TrimSpace(scanner.Text())
-		if line != "" && !strings.HasPrefix(line, "//") {
+		if line != "" && !strings.HasPrefix(line, "#") {
 			lines = append(lines, line)
 		}
 	}
@@ -148,30 +148,72 @@ func createDefaultConfig(configPath string) error {
 	return toml.NewEncoder(file).Encode(defaultConfig)
 }
 
+func createDefaultURLsFile(filePath string) error {
+	// Default content for the URLs file
+	defaultContent := `# Default URLs file
+# Add your URLs here, one per line
+# Example:
+# https://www.youtube.com/feeds/videos.xml?channel_id=UC-lHJZR3Gqxm24_Vd_AJ5Yw`
+
+	// Expand the file path
+	expandedPath, err := expandPath(filePath)
+	if err != nil {
+		return err
+	}
+
+	// Create the file with default content
+	file, err := os.Create(expandedPath)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	// Write the default content to the file
+	_, err = file.WriteString(defaultContent)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func mainAction(c *cli.Context) error {
+	// Expand the config directory path
 	configDir, err := expandPath(CONFIG_DIR)
 	if err != nil {
 		return fmt.Errorf("failed to expand config directory: %w", err)
 	}
 
+	// Ensure the config directory exists or create it
 	err = ensureDir(configDir)
 	if err != nil {
 		return fmt.Errorf("failed to ensure config directory: %w", err)
 	}
 
+	// Check if the main config file exists
 	configPath := filepath.Join(configDir, CONFIG_FILE)
 	if _, err := os.Stat(configPath); os.IsNotExist(err) {
+		// If the main config file doesn't exist, create it
 		err := createDefaultConfig(configPath)
 		if err != nil {
 			return fmt.Errorf("failed to create default config file: %w", err)
 		}
+
+		// Create the default URLs file
+		urlsFilePath := filepath.Join(configDir, DEFAULT_URLS_PATH)
+		err = createDefaultURLsFile(urlsFilePath)
+		if err != nil {
+			return fmt.Errorf("failed to create default URLs file: %w", err)
+		}
 	}
 
+	// Load the config
 	config, err := loadConfig(configPath)
 	if err != nil {
 		return fmt.Errorf("failed to load config file: %w", err)
 	}
 
+	// Retrieve command line arguments or use values from config
 	urlsPath := c.String("urls")
 	if urlsPath == "" {
 		urlsPath = config.UrlsPath
@@ -187,16 +229,19 @@ func mainAction(c *cli.Context) error {
 		downloadPath = config.DownloadPath
 	}
 
+	// Ensure the download directory exists
 	err = ensureDir(downloadPath)
 	if err != nil {
 		return fmt.Errorf("failed to ensure download directory: %w", err)
 	}
 
+	// Parse the URLs file
 	urls, err := parseURLFile(urlsPath)
 	if err != nil {
 		return fmt.Errorf("failed to parse URL file: %w", err)
 	}
 
+	// Parse and download feeds
 	fp := gofeed.NewParser()
 	for index, item := range urls {
 		fmt.Printf("Parsing URL %d: %s\n", index+1, item)
