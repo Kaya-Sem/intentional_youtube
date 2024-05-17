@@ -22,7 +22,7 @@ This Golang program allows you to download videos from YouTube channels using th
 
 `sudo chmod +x intentional_youtube; cp intentional_youtube /usr/local/bin`
 
-1. When first running the program, a config file and template URLs file will be generated at `~/.config/intentional_youtube/`. From then on, running the program will parse any URLS in the file, and download them.
+2. When first running the program, a config file and template URLs file will be generated at `~/.config/intentional_youtube/`. From then on, running the program will parse any URLS in the file, and download them.
 
 The URLs file may contain blank lines and comments, formatted with `#`.
 
@@ -36,7 +36,7 @@ https://www.youtube.com/feeds/videos.xml?channel_id=UCaiVt4r6YLPzJVgr7pOmD6w
 https://www.youtube.com/feeds/videos.xml?channel_id=UCXuqSBlHAE6Xw-yeJA0Tunw
 ```
 
-The default values in `config.toml` can be overriden with flags, which you can find more about with the help flag:
+The default values in `config.toml` can be overriden with flags, which you can learn more about with the help flag:
 
 `intentional_youtube --help`
 
